@@ -1,7 +1,7 @@
 class Ahab < Formula
   desc "ahab CLI tool"
   homepage "https://github.com/jimberlage/ahab"
-  version "1.0.0"
+  version "2.0.0"
   license "MIT"
 
   on_macos do
