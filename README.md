@@ -30,7 +30,7 @@ Running `ahab accept --session <session_id>` will convert the markdown documents
 Run the release script:
 
 ```sh
-./scripts/release.sh v1.0.1
+./scripts/release.sh 1.0.1
 ```
 
 Then, go to the releases, find the SHA256 values, and add them into [`Formula/ahab.rb`](Formula/ahab.rb).
