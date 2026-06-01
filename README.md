@@ -6,7 +6,7 @@ Like the AWS CLI, it operates off of profiles.  There is a default profile, and 
 
 ## Configuration
 
-Configuration is stored in `"${HOME}/.ahab".  Running `ahab configure` will walk you through setup.  At a minimum, you need an API token.
+Configuration is stored in `"${HOME}/.ahab"`.  Running `ahab configure` will walk you through setup.  At a minimum, you need an API token.
 
 `.ahab/credentials` stores credentials, in TOML format, while `.ahab/config` stores other configuration (like workspaces, teams, etc.) for specific profiles.
 
