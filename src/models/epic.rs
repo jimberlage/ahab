@@ -241,12 +241,9 @@ Use JWT tokens for session management.
 
     #[test]
     fn test_epic_to_markdown() {
-        let epic = Epic::new(
-            "Test Epic".to_string(),
-            "This is a test".to_string(),
-        )
-        .with_acceptance_criteria(vec!["Criterion 1".to_string()])
-        .with_tags(vec!["test".to_string()]);
+        let epic = Epic::new("Test Epic".to_string(), "This is a test".to_string())
+            .with_acceptance_criteria(vec!["Criterion 1".to_string()])
+            .with_tags(vec!["test".to_string()]);
 
         let md = epic.to_markdown();
         assert!(md.contains("# Test Epic"));

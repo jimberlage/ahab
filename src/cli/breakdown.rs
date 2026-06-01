@@ -74,10 +74,8 @@ pub async fn breakdown(
     println!();
 
     // Call OpenRouter to generate epics
-    let openrouter_client = OpenRouterClient::new(
-        credentials.openrouter_api_key.unwrap(),
-        default_model,
-    );
+    let openrouter_client =
+        OpenRouterClient::new(credentials.openrouter_api_key.unwrap(), default_model);
 
     let epics_markdown = openrouter_client.breakdown_to_epics(&content).await?;
 
@@ -98,9 +96,7 @@ pub async fn breakdown(
     }
 
     if epics.is_empty() {
-        return Err(AhabError::Api(
-            "No valid epics were generated".to_string(),
-        ));
+        return Err(AhabError::Api("No valid epics were generated".to_string()));
     }
 
     // Save epics and metadata

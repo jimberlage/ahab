@@ -92,11 +92,8 @@ impl Session {
         for entry in fs::read_dir(sessions_dir)? {
             let entry = entry?;
             if entry.file_type()?.is_dir() {
-                let session_id = entry
-                    .file_name()
-                    .to_string_lossy()
-                    .to_string();
-                
+                let session_id = entry.file_name().to_string_lossy().to_string();
+
                 if let Ok(session) = Self::load(sessions_dir, &session_id) {
                     sessions.push(session.metadata);
                 }

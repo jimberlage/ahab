@@ -13,9 +13,8 @@ pub struct ConfigManager {
 
 impl ConfigManager {
     pub fn new() -> Result<Self> {
-        let home = dirs::home_dir().ok_or_else(|| {
-            AhabError::Config("Could not determine home directory".to_string())
-        })?;
+        let home = dirs::home_dir()
+            .ok_or_else(|| AhabError::Config("Could not determine home directory".to_string()))?;
         let config_dir = home.join(".ahab");
         Ok(ConfigManager { config_dir })
     }

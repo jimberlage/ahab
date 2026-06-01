@@ -25,7 +25,12 @@ pub async fn configure(profile_name: Option<String>) -> Result<()> {
     // Prompt for credentials
     let aha_token: String = Input::new()
         .with_prompt("Aha API Token")
-        .default(existing_creds.as_ref().map(|c| c.aha_token.clone()).unwrap_or_default())
+        .default(
+            existing_creds
+                .as_ref()
+                .map(|c| c.aha_token.clone())
+                .unwrap_or_default(),
+        )
         .interact_text()?;
 
     let openrouter_api_key: String = Password::new()
@@ -89,7 +94,11 @@ pub async fn configure(profile_name: Option<String>) -> Result<()> {
         } else {
             Some(product_id)
         },
-        team_id: if team_id.is_empty() { None } else { Some(team_id) },
+        team_id: if team_id.is_empty() {
+            None
+        } else {
+            Some(team_id)
+        },
         default_model: if default_model.is_empty() {
             None
         } else {

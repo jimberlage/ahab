@@ -132,9 +132,7 @@ Separate each epic with a line of three dashes (---).
         let api_response: OpenRouterResponse = response.json().await?;
 
         if api_response.choices.is_empty() {
-            return Err(AhabError::OpenRouterApi(
-                "No response from API".to_string(),
-            ));
+            return Err(AhabError::OpenRouterApi("No response from API".to_string()));
         }
 
         Ok(api_response.choices[0].message.content.clone())

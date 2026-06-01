@@ -12,12 +12,23 @@ pub struct AhaClient {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+struct AhaDescription {
+    pub body: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 struct AhaPage {
     pub id: String,
     pub reference_num: String,
     pub name: String,
     pub body: Option<String>,
     pub html_body: Option<String>,
+    pub description: Option<AhaDescription>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct AhaPageResponse {
+    pub page: AhaPage,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -92,12 +103,45 @@ impl AhaClient {
             )));
         }
 
-        let aha_page: AhaPage = response.json().await?;
+        let response_text = response.text().await?;
+
+        // Try to deserialize as wrapped response first
+        if let Ok(wrapped) = serde_json::from_str::<AhaPageResponse>(&response_text) {
+            let aha_page = wrapped.page;
+
+            // Extract body from description.body, fallback to body, then html_body
+            let body_content = aha_page
+                .description
+                .as_ref()
+                .and_then(|d| d.body.clone())
+                .or_else(|| aha_page.body.clone())
+                .or_else(|| aha_page.html_body.clone());
+
+            return Ok(Page::new(aha_page.id.clone(), aha_page.name.clone())
+                .with_body(body_content.clone().unwrap_or_default())
+                .with_html_body(body_content.unwrap_or_default())
+                .with_url(format!(
+                    "https://{}/pages/{}",
+                    self.domain, aha_page.reference_num
+                )));
+        }
+
+        // Fall back to unwrapped response
+        let aha_page: AhaPage = serde_json::from_str(&response_text)?;
+        let body_content = aha_page
+            .description
+            .as_ref()
+            .and_then(|d| d.body.clone())
+            .or_else(|| aha_page.body.clone())
+            .or_else(|| aha_page.html_body.clone());
 
         Ok(Page::new(aha_page.id.clone(), aha_page.name.clone())
-            .with_body(aha_page.body.unwrap_or_default())
-            .with_html_body(aha_page.html_body.unwrap_or_default())
-            .with_url(format!("https://{}/pages/{}", self.domain, aha_page.reference_num)))
+            .with_body(body_content.clone().unwrap_or_default())
+            .with_html_body(body_content.unwrap_or_default())
+            .with_url(format!(
+                "https://{}/pages/{}",
+                self.domain, aha_page.reference_num
+            )))
     }
 
     pub async fn create_epic(&self, product_id: &str, epic: &Epic) -> Result<String> {
@@ -207,11 +251,13 @@ mod tests {
             .with_header("content-type", "application/json")
             .with_body(
                 r#"{
-                "id": "123",
-                "reference_num": "PAGE-1",
-                "name": "Test Page",
-                "body": "Test body",
-                "html_body": "<p>Test body</p>"
+                "page": {
+                    "id": "123",
+                    "reference_num": "PAGE-1",
+                    "name": "Test Page",
+                    "body": "Test body",
+                    "html_body": "<p>Test body</p>"
+                }
             }"#,
             )
             .create_async()

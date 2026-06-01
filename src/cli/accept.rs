@@ -27,9 +27,7 @@ pub async fn accept(session_id: String, profile_name: Option<String>) -> Result<
     let epics = session.load_epics()?;
 
     if epics.is_empty() {
-        return Err(AhabError::Session(
-            "No epics found in session".to_string(),
-        ));
+        return Err(AhabError::Session("No epics found in session".to_string()));
     }
 
     println!("Creating {} epics in Aha...", epics.len());
@@ -44,7 +42,12 @@ pub async fn accept(session_id: String, profile_name: Option<String>) -> Result<
 
     // Create epics
     for (i, epic) in epics.iter().enumerate() {
-        print!("Creating epic {}/{}: {}... ", i + 1, epics.len(), epic.title);
+        print!(
+            "Creating epic {}/{}: {}... ",
+            i + 1,
+            epics.len(),
+            epic.title
+        );
 
         match aha_client.create_epic(&product_id, epic).await {
             Ok(url) => {
