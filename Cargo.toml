@@ -1,6 +1,6 @@
 [package]
 name = "ahab"
-version = "1.0.0"
+version = "2.0.0"
 edition = "2021"
 authors = ["Jim Berlage <jamesberlage@gmail.com>"]
 description = "Aha Butler - A CLI helper for generating Aha tickets from plain text"
