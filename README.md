@@ -10,8 +10,27 @@ Configuration is stored in `"${HOME}/.ahab"`.  Running `ahab configure` will wal
 
 `.ahab/credentials` stores credentials, in TOML format, while `.ahab/config` stores other configuration (like workspaces, teams, etc.) for specific profiles.
 
+## Install
+
+On macOS:
+
+```zsh
+brew tap jimberlage/ahab https://github.com/jimberlage/ahab
+brew install ahab
+```
+
 ## Usage
 
 Running `ahab breakdown` will take a piece of documentation in an Aha page, convert it to markdown, and suggest epics as a series of markdown documents.  It writes documents to `.ahab/sessions/<session_id>`.  It returns the session_id to the user.  It also contains a special file, `.ahab/sessions/<session_id>/metadata.toml`, used to store the Aha page and any other metadata that makes sense.
 
 Running `ahab accept --session <session_id>` will convert the markdown documents in `.ahab/sessions/<session_id>` to epics in Aha, and return links to the epics.  It also references the metadata.toml section to find the parent page, and adds links to the created epics in a comment. 
+
+## Release new version
+
+Run the release script:
+
+```sh
+./scripts/release.sh v1.0.1
+```
+
+Then, go to the releases, find the SHA256 values, and add them into [`Formula/ahab.rb`](Formula/ahab.rb).

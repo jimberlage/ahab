@@ -5,11 +5,11 @@ set -euo pipefail
 # This script creates a git tag which triggers the GitHub Actions release workflow.
 #
 # Usage: ./scripts/release.sh <version>
-# Example: ./scripts/release.sh 0.1.0
+# Example: ./scripts/release.sh v1.0.1
 
 if [ $# -eq 0 ]; then
     echo "Usage: $0 <version>"
-    echo "Example: $0 0.1.0"
+    echo "Example: $0 v1.0.1"
     exit 1
 fi
 
