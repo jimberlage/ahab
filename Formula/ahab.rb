@@ -7,18 +7,18 @@ class Ahab < Formula
   on_macos do
     on_arm do
       url "https://github.com/jimberlage/ahab/releases/download/v1.0.0/ahab-aarch64-apple-darwin.tar.gz"
-      sha256 "93368a3f7413d5f69968a2f58fe5a94b379fd262d2915f8beef6d8375a34fe48"
+      sha256 "ae9abaf5ade888ea5c3e98534fef9681108ce40db4a902e803ea7115767e18d2"
     end
   end
 
   on_linux do
     on_arm do
       url "https://github.com/jimberlage/ahab/releases/download/v1.0.0/ahab-aarch64-linux.tar.gz"
-      sha256 "658020e2afa200306b8dab66da17f9acc3833d813d5bf9b84fba271f53cdb97e"
+      sha256 "88a01625387c3d8610f437ec061b74f24b7e06f9669874b029106021ee37965d"
     end
     on_intel do
       url "https://github.com/jimberlage/ahab/releases/download/v1.0.0/ahab-x86_64-linux.tar.gz"
-      sha256 "d2a0c488dce1bbc3d3ba17121f7e482ca0686c6011eac5ed42a108b6ca308f95"
+      sha256 "51321af8916abe67b07db12ccc98c85e1caac664156b339769fd7677c7150b0e"
     end
   end
 
