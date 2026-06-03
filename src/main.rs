@@ -26,11 +26,10 @@ enum Commands {
         profile: Option<String>,
     },
 
-    /// Breakdown an Aha page or stdin into epics
-    Breakdown {
-        /// Aha page ID to breakdown
-        #[arg(short, long, conflicts_with = "stdin")]
-        page_id: Option<String>,
+    /// Convert Aha pages to markdown in a session
+    Convert {
+        /// Page URLs or slugs (e.g., https://apexlabs.aha.io/pages/VAFM-N-91 or VAFM-N-91)
+        pages: Vec<String>,
 
         /// Profile to use
         #[arg(short = 'P', long)]
@@ -39,15 +38,11 @@ enum Commands {
         /// Session ID to use (creates new if not provided)
         #[arg(short, long)]
         session: Option<String>,
-
-        /// Read content from stdin instead of fetching from Aha
-        #[arg(long)]
-        stdin: bool,
     },
 
-    /// Accept a session and create epics in Aha
-    Accept {
-        /// Session ID to accept
+    /// Push a session and create epics in Aha
+    Push {
+        /// Session ID to push
         #[arg(short, long)]
         session: String,
 
@@ -55,6 +50,16 @@ enum Commands {
         #[arg(short = 'P', long)]
         profile: Option<String>,
     },
+
+    /// Open a session in OpenCode for editing and review
+    Critique {
+        /// Session ID to critique
+        #[arg(short, long)]
+        session: String,
+    },
+
+    /// Launch MCP server for programmatic access to ahab commands
+    Mcp,
 
     /// List all sessions
     #[command(name = "list-sessions")]
@@ -88,13 +93,14 @@ async fn main() {
 
     let result = match cli.command {
         Commands::Configure { profile } => cli::configure(profile).await,
-        Commands::Breakdown {
-            page_id,
+        Commands::Convert {
+            pages,
             profile,
             session,
-            stdin,
-        } => cli::breakdown(page_id, profile, session, stdin).await,
-        Commands::Accept { session, profile } => cli::accept(session, profile).await,
+        } => cli::convert(pages, profile, session).await,
+        Commands::Push { session, profile } => cli::push(session, profile).await,
+        Commands::Critique { session } => cli::critique(session).await,
+        Commands::Mcp => cli::mcp().await,
         Commands::ListSessions => cli::list_sessions().await,
         Commands::DeleteSession { session } => cli::delete_session(session).await,
     };

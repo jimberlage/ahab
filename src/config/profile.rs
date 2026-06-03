@@ -13,10 +13,7 @@ pub struct Config {
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct ProfileConfig {
-    pub workspace_id: Option<String>,
     pub product_id: Option<String>,
-    pub team_id: Option<String>,
-    pub default_model: Option<String>,
     pub aha_domain: Option<String>,
 }
 
@@ -68,10 +65,7 @@ mod tests {
         config.set_profile(
             "default".to_string(),
             ProfileConfig {
-                workspace_id: Some("WORKSPACE-1".to_string()),
                 product_id: Some("PRODUCT-1".to_string()),
-                team_id: None,
-                default_model: Some("anthropic/claude-sonnet-4".to_string()),
                 aha_domain: Some("mycompany.aha.io".to_string()),
             },
         );
@@ -81,8 +75,8 @@ mod tests {
 
         assert_eq!(loaded.profiles.len(), 1);
         assert_eq!(
-            loaded.get_profile("default").unwrap().workspace_id,
-            Some("WORKSPACE-1".to_string())
+            loaded.get_profile("default").unwrap().product_id,
+            Some("PRODUCT-1".to_string())
         );
     }
 }

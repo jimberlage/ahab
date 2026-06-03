@@ -11,19 +11,27 @@ pub struct AhaClient {
     pub(crate) domain: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-struct AhaDescription {
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AhaDescription {
     pub body: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-struct AhaPage {
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ChildPage {
+    pub reference_num: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AhaPage {
     pub id: String,
     pub reference_num: String,
     pub name: String,
     pub body: Option<String>,
     pub html_body: Option<String>,
     pub description: Option<AhaDescription>,
+    pub child_pages: Option<Vec<ChildPage>>,
+    pub parent_id: Option<String>,
+    pub product_id: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -84,6 +92,7 @@ impl AhaClient {
     }
 
     pub async fn get_page(&self, page_id: &str) -> Result<Page> {
+        // Try without fields parameter first, or with different parameter
         let url = format!("{}/pages/{}", self.base_url(), page_id);
 
         let response = self
@@ -115,15 +124,21 @@ impl AhaClient {
                 .as_ref()
                 .and_then(|d| d.body.clone())
                 .or_else(|| aha_page.body.clone())
-                .or_else(|| aha_page.html_body.clone());
+            .or_else(|| aha_page.html_body.clone());
 
-            return Ok(Page::new(aha_page.id.clone(), aha_page.name.clone())
-                .with_body(body_content.clone().unwrap_or_default())
-                .with_html_body(body_content.unwrap_or_default())
-                .with_url(format!(
-                    "https://{}/pages/{}",
-                    self.domain, aha_page.reference_num
-                )));
+        return Ok(Page::new(
+            aha_page.id.clone(),
+            aha_page.reference_num.clone(),
+            aha_page.name.clone(),
+        )
+        .with_body(body_content.clone().unwrap_or_default())
+        .with_html_body(body_content.unwrap_or_default())
+        .with_url(format!(
+            "https://{}/pages/{}",
+            self.domain, aha_page.reference_num
+        ))
+        .with_product_id(aha_page.product_id.clone())
+        .with_parent_id(aha_page.parent_id.clone()));
         }
 
         // Fall back to unwrapped response
@@ -135,13 +150,90 @@ impl AhaClient {
             .or_else(|| aha_page.body.clone())
             .or_else(|| aha_page.html_body.clone());
 
-        Ok(Page::new(aha_page.id.clone(), aha_page.name.clone())
-            .with_body(body_content.clone().unwrap_or_default())
-            .with_html_body(body_content.unwrap_or_default())
-            .with_url(format!(
-                "https://{}/pages/{}",
-                self.domain, aha_page.reference_num
-            )))
+        Ok(Page::new(
+            aha_page.id.clone(),
+            aha_page.reference_num.clone(),
+            aha_page.name.clone(),
+        )
+        .with_body(body_content.clone().unwrap_or_default())
+        .with_html_body(body_content.unwrap_or_default())
+        .with_url(format!(
+            "https://{}/pages/{}",
+            self.domain, aha_page.reference_num
+        ))
+        .with_product_id(aha_page.product_id.clone())
+        .with_parent_id(aha_page.parent_id.clone()))
+    }
+
+    /// Get children of a specific page from a pre-fetched list
+    pub fn get_children_from_list(&self, all_pages: &[AhaPage], parent_page_id: &str) -> Vec<String> {
+        all_pages
+            .iter()
+            .filter(|p| {
+                p.parent_id.as_ref().map(|pid| pid == parent_page_id).unwrap_or(false)
+            })
+            .map(|p| p.reference_num.clone())
+            .collect()
+    }
+
+    /// Fetch all pages for a product, handling pagination
+    pub async fn fetch_all_pages(&self, product_id: &str) -> Result<Vec<AhaPage>> {
+        let mut all_pages = Vec::new();
+        let mut current_page = 1;
+        
+        loop {
+            let url = format!(
+                "{}/products/{}/pages?page={}",
+                self.base_url(),
+                product_id,
+                current_page
+            );
+
+            let response = self
+                .client
+                .get(&url)
+                .header("Authorization", format!("Bearer {}", self.token))
+                .header("Accept", "application/json")
+                .send()
+                .await?;
+
+            if !response.status().is_success() {
+                let status = response.status();
+                let body = response.text().await.unwrap_or_default();
+                return Err(AhabError::AhaApi(format!(
+                    "Failed to list pages for product {}: {} - {}",
+                    product_id, status, body
+                )));
+            }
+
+            let response_text = response.text().await?;
+            
+            // Parse the response
+            #[derive(Debug, Deserialize)]
+            struct Pagination {
+                total_pages: u32,
+            }
+
+            #[derive(Debug, Deserialize)]
+            struct PagesResponse {
+                pages: Vec<AhaPage>,
+                pagination: Pagination,
+            }
+
+            let pages_response: PagesResponse = serde_json::from_str(&response_text)
+                .map_err(|e| AhabError::AhaApi(format!("Failed to parse pages response: {}", e)))?;
+
+            all_pages.extend(pages_response.pages);
+
+            // Check if there are more pages
+            if current_page >= pages_response.pagination.total_pages {
+                break;
+            }
+            
+            current_page += 1;
+        }
+
+        Ok(all_pages)
     }
 
     pub async fn create_epic(&self, product_id: &str, epic: &Epic) -> Result<String> {

@@ -1,6 +1,6 @@
 [package]
 name = "ahab"
-version = "2.0.0"
+version = "3.0.0"
 edition = "2021"
 authors = ["Jim Berlage <jamesberlage@gmail.com>"]
 description = "Aha Butler - A CLI helper for generating Aha tickets from plain text"
@@ -15,7 +15,7 @@ path = "src/main.rs"
 clap = { version = "4.5", features = ["derive", "env"] }
 
 # Async runtime
-tokio = { version = "1.36", features = ["full"] }
+tokio = { version = "1.36", features = ["full", "sync"] }
 
 # HTTP client
 reqwest = { version = "0.11", features = ["json", "rustls-tls"], default-features = false }

@@ -1,15 +1,17 @@
+use chrono::Utc;
+
 use crate::api::AhaClient;
 use crate::config::ConfigManager;
 use crate::error::{AhabError, Result};
-use crate::session::Session;
+use crate::session::{EpicManifestEntry, Session};
 
-pub async fn accept(session_id: String, profile_name: Option<String>) -> Result<()> {
+pub async fn push(session_id: String, profile_name: Option<String>) -> Result<()> {
     let profile = profile_name.unwrap_or_else(|| "default".to_string());
     let config_manager = ConfigManager::new()?;
 
     // Load session
     let sessions_dir = config_manager.sessions_dir();
-    let session = Session::load(&sessions_dir, &session_id)?;
+    let mut session = Session::load(&sessions_dir, &session_id)?;
 
     // Load credentials and config
     let credentials = config_manager.get_profile_credentials(&profile)?;
@@ -23,14 +25,37 @@ pub async fn accept(session_id: String, profile_name: Option<String>) -> Result<
         AhabError::Config("Product ID is required. Run 'ahab configure' first.".to_string())
     })?;
 
-    // Load epics from session
-    let epics = session.load_epics()?;
+    // Load epics from session with filenames
+    let epics_with_files = session.load_epics_with_filenames()?;
 
-    if epics.is_empty() {
+    if epics_with_files.is_empty() {
         return Err(AhabError::Session("No epics found in session".to_string()));
     }
 
-    println!("Creating {} epics in Aha...", epics.len());
+    // Filter out epics that have already been uploaded
+    let epics_to_create: Vec<_> = epics_with_files
+        .iter()
+        .filter(|(_, filename)| {
+            // Check if this epic has already been created
+            !session
+                .metadata
+                .epic_manifest
+                .get(filename)
+                .map(|entry| entry.epic_id.is_some())
+                .unwrap_or(false)
+        })
+        .collect();
+
+    if epics_to_create.is_empty() {
+        println!("All epics have already been created. No new epics to upload.");
+        return Ok(());
+    }
+
+    println!(
+        "Creating {} new epics in Aha (skipping {} already created)...",
+        epics_to_create.len(),
+        epics_with_files.len() - epics_to_create.len()
+    );
     println!();
 
     // Create Aha client
@@ -41,18 +66,32 @@ pub async fn accept(session_id: String, profile_name: Option<String>) -> Result<
     let mut failures = Vec::new();
 
     // Create epics
-    for (i, epic) in epics.iter().enumerate() {
+    for (i, (epic, filename)) in epics_to_create.iter().enumerate() {
         print!(
             "Creating epic {}/{}: {}... ",
             i + 1,
-            epics.len(),
+            epics_to_create.len(),
             epic.title
         );
 
         match aha_client.create_epic(&product_id, epic).await {
             Ok(url) => {
                 println!("✓");
-                created_urls.push((epic.title.clone(), url));
+                created_urls.push((epic.title.clone(), url.clone()));
+
+                // Update manifest
+                session
+                    .metadata
+                    .epic_manifest
+                    .insert(
+                        filename.clone(),
+                        EpicManifestEntry {
+                            filename: filename.clone(),
+                            epic_id: None, // We don't have the epic ID from the URL
+                            epic_url: Some(url),
+                            created_at: Some(Utc::now()),
+                        },
+                    );
             }
             Err(e) => {
                 println!("✗");
@@ -61,6 +100,9 @@ pub async fn accept(session_id: String, profile_name: Option<String>) -> Result<
             }
         }
     }
+
+    // Save updated manifest
+    session.save_metadata()?;
 
     println!();
 
@@ -110,7 +152,7 @@ pub async fn accept(session_id: String, profile_name: Option<String>) -> Result<
     } else {
         Err(AhabError::PartialFailure {
             completed: created_urls.len(),
-            total: epics.len(),
+            total: epics_to_create.len(),
         })
     }
 }
