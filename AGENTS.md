@@ -6,9 +6,9 @@ Read the README first for an idea of the intention for the project, CLI configur
 
 This is a Rust CLI tool for interacting with the [Aha API](https://www.aha.io/api).  Aha is a project management tool.
 
-It reads documents, and writes back epics (not tasks, yet.)  It also interfaces with the OpenRouter API to do some of the commands, like `ahab breakdown`.  Here is the OpenRouter API (it does not have a Rust SDK yet): https://openrouter.ai/docs/quickstart#using-the-openrouter-api
+It reads documents, and writes back epics (not tasks, yet.)
 
-The Aha token, the OpenRouter API key, and the default model to use should all be configurable in `ahab configure`, and can all be set on a per-profile basis.
+The Aha token should be configurable in `ahab configure`, and can be set on a per-profile basis.
 
 ## Prompting
 

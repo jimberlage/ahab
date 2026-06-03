@@ -70,8 +70,8 @@ impl Session {
         // Create .opencode directory and breakdown agent configuration
         let opencode_dir = session_dir.join(".opencode");
         fs::create_dir_all(&opencode_dir)?;
-        
-                let breakdown_agent_config = r#"---
+
+        let breakdown_agent_config = r#"---
 description: Breaks down *.page.md files into epic files (*.epic.md)
 mode: subagent
 ---
@@ -111,10 +111,10 @@ When you're done, save the epic files as epic_001.epic.md, epic_002.epic.md, etc
         // Create agents directory
         let agents_dir = opencode_dir.join("agents");
         fs::create_dir_all(&agents_dir)?;
-        
+
         let agent_config_path = agents_dir.join("breakdown.md");
         fs::write(agent_config_path, breakdown_agent_config)?;
-        
+
         // Create critic agent configuration (primary agent)
         let critic_agent_config = r#"---
 description: Reviews, modifies, and manages epics in conversation with the user
@@ -178,7 +178,8 @@ When pushing epics:
             .unwrap_or_else(|| "ahab".to_string());
 
         // Create opencode.jsonc with MCP server configuration
-        let opencode_config = format!(r#"{{
+        let opencode_config = format!(
+            r#"{{
   "$schema": "https://opencode.ai/config.json",
   // OpenCode configuration for Ahab session {}
   "mcp": {{
@@ -189,8 +190,10 @@ When pushing epics:
     }}
   }}
 }}
-"#, session_id, ahab_bin);
-        
+"#,
+            session_id, ahab_bin
+        );
+
         let opencode_config_path = session_dir.join("opencode.jsonc");
         fs::write(opencode_config_path, opencode_config)?;
 
@@ -202,17 +205,22 @@ When pushing epics:
             .arg("opencode")
             .current_dir(&session_dir)
             .output();
-        
+
         match specify_result {
             Ok(output) if output.status.success() => {
                 eprintln!("Initialized specify for session {}", session_id);
             }
             Ok(output) => {
-                eprintln!("Warning: specify init failed: {}", 
-                    String::from_utf8_lossy(&output.stderr));
+                eprintln!(
+                    "Warning: specify init failed: {}",
+                    String::from_utf8_lossy(&output.stderr)
+                );
             }
             Err(e) => {
-                eprintln!("Warning: Could not run specify init (is specify installed?): {}", e);
+                eprintln!(
+                    "Warning: Could not run specify init (is specify installed?): {}",
+                    e
+                );
             }
         }
 
@@ -330,10 +338,7 @@ When pushing epics:
         entries.sort_by_key(|e| e.file_name());
 
         for entry in entries {
-            let filename = entry
-                .file_name()
-                .to_string_lossy()
-                .to_string();
+            let filename = entry.file_name().to_string_lossy().to_string();
             let content = fs::read_to_string(entry.path())?;
             match Epic::from_markdown(&content) {
                 Ok(epic) => epics.push((epic, filename)),
@@ -365,15 +370,15 @@ mod tests {
             Session::new(&sessions_dir, "default".to_string(), SessionSource::Page).unwrap();
 
         assert!(session.session_dir.exists());
-        
+
         // Verify .opencode directory was created
         let opencode_dir = session.session_dir.join(".opencode");
         assert!(opencode_dir.exists());
-        
+
         // Verify breakdown agent config was created
         let breakdown_config = opencode_dir.join("agents").join("breakdown.md");
         assert!(breakdown_config.exists());
-        
+
         // Verify the content of the breakdown config
         let config_content = fs::read_to_string(breakdown_config).unwrap();
         assert!(config_content.contains("description:"));
@@ -381,11 +386,11 @@ mod tests {
         assert!(config_content.contains("*.page.md"));
         assert!(config_content.contains("*.epic.md"));
         assert!(config_content.contains("metadata.toml"));
-        
+
         // Verify critic agent config was created
         let critic_config = opencode_dir.join("agents").join("critic.md");
         assert!(critic_config.exists());
-        
+
         // Verify the content of the critic config
         let critic_content = fs::read_to_string(critic_config).unwrap();
         assert!(critic_content.contains("description:"));
@@ -393,11 +398,11 @@ mod tests {
         assert!(critic_content.contains("*.epic.md"));
         assert!(critic_content.contains("metadata.toml"));
         assert!(critic_content.contains("@breakdown"));
-        
+
         // Verify opencode.jsonc was created
         let opencode_jsonc = session.session_dir.join("opencode.jsonc");
         assert!(opencode_jsonc.exists());
-        
+
         // Verify the content of opencode.jsonc
         let jsonc_content = fs::read_to_string(opencode_jsonc).unwrap();
         assert!(jsonc_content.contains("\"mcp\""));
@@ -442,7 +447,7 @@ mod tests {
             let filename = format!("epic_{:03}.epic.md", i + 1);
             session.save_epic(epic, &filename).unwrap();
         }
-        
+
         let loaded_epics = session.load_epics().unwrap();
 
         assert_eq!(loaded_epics.len(), 2);

@@ -11,9 +11,6 @@ pub enum AhabError {
     #[error("Aha API error: {0}")]
     AhaApi(String),
 
-    #[error("OpenRouter API error: {0}")]
-    OpenRouterApi(String),
-
     #[error("Session not found: {0}")]
     SessionNotFound(String),
 

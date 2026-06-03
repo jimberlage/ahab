@@ -1,4 +1,4 @@
-use std::collections::{HashSet, HashMap};
+use std::collections::{HashMap, HashSet};
 
 use crate::api::{AhaClient, AhaPage};
 use crate::config::ConfigManager;
@@ -19,7 +19,7 @@ pub async fn convert(
     // Load configuration
     let config_manager = ConfigManager::new()?;
     let profile_name = profile.unwrap_or_else(|| "default".to_string());
-    
+
     // Load credentials and config
     let credentials = config_manager.get_profile_credentials(&profile_name)?;
     let profile_config = config_manager.get_profile_config(&profile_name)?;
@@ -40,13 +40,21 @@ pub async fn convert(
             Ok(session) => (session, false),
             Err(AhabError::SessionNotFound(_)) => {
                 // Create new session with the specified ID
-                let session = Session::with_id(&sessions_dir, sid.clone(), profile_name.clone(), SessionSource::Page)?;
+                let session = Session::with_id(
+                    &sessions_dir,
+                    sid.clone(),
+                    profile_name.clone(),
+                    SessionSource::Page,
+                )?;
                 (session, true)
             }
             Err(e) => return Err(e),
         }
     } else {
-        (Session::new(&sessions_dir, profile_name.clone(), SessionSource::Page)?, true)
+        (
+            Session::new(&sessions_dir, profile_name.clone(), SessionSource::Page)?,
+            true,
+        )
     };
 
     if session_created {
@@ -158,7 +166,7 @@ async fn process_page_recursively(
         // Get children from cached list
         let all_pages = product_pages_cache.get(product_id).unwrap();
         let child_refs = aha_client.get_children_from_list(all_pages, &page.id);
-        
+
         if !child_refs.is_empty() {
             println!("  Found {} child page(s)", child_refs.len());
             for child_ref in &child_refs {

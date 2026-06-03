@@ -6,35 +6,35 @@ use crate::error::Result;
 /// Launch the MCP server using STDIO transport with simple JSON-RPC
 pub async fn mcp() -> Result<()> {
     tracing::debug!("Starting MCP server");
-    
+
     let stdin = io::stdin();
     let mut stdout = io::stdout();
-    
+
     for line in stdin.lock().lines() {
         let line = line?;
         if line.trim().is_empty() {
             continue;
         }
-        
+
         tracing::debug!("Received: {}", line);
-        
+
         let request: Value = serde_json::from_str(&line)?;
         let response = handle_request(request).await;
-        
+
         let response_json = serde_json::to_string(&response)?;
         writeln!(stdout, "{}", response_json)?;
         stdout.flush()?;
-        
+
         tracing::debug!("Sent: {}", response_json);
     }
-    
+
     Ok(())
 }
 
 async fn handle_request(request: Value) -> Value {
     let method = request.get("method").and_then(|v| v.as_str());
     let id = request.get("id").cloned();
-    
+
     match method {
         Some("initialize") => {
             json!({
@@ -143,27 +143,25 @@ async fn handle_request(request: Value) -> Value {
 }
 
 async fn handle_tool_call(id: Option<Value>, params: Option<&Value>) -> Value {
-    let tool_name = params
-        .and_then(|p| p.get("name"))
-        .and_then(|v| v.as_str());
-    
+    let tool_name = params.and_then(|p| p.get("name")).and_then(|v| v.as_str());
+
     let arguments = params.and_then(|p| p.get("arguments"));
-    
+
     match tool_name {
         Some("convert") => {
             let pages: Vec<String> = arguments
                 .and_then(|a| a.get("pages"))
                 .and_then(|v| serde_json::from_value(v.clone()).ok())
                 .unwrap_or_default();
-            
+
             let profile: Option<String> = arguments
                 .and_then(|a| a.get("profile"))
                 .and_then(|v| serde_json::from_value(v.clone()).ok());
-            
+
             let session: Option<String> = arguments
                 .and_then(|a| a.get("session"))
                 .and_then(|v| serde_json::from_value(v.clone()).ok());
-            
+
             match crate::cli::convert(pages, profile, session).await {
                 Ok(_) => json!({
                     "jsonrpc": "2.0",
@@ -182,7 +180,7 @@ async fn handle_tool_call(id: Option<Value>, params: Option<&Value>) -> Value {
                         "code": -32000,
                         "message": e.to_string()
                     }
-                })
+                }),
             }
         }
         Some("push") => {
@@ -191,11 +189,11 @@ async fn handle_tool_call(id: Option<Value>, params: Option<&Value>) -> Value {
                 .and_then(|v| v.as_str())
                 .unwrap_or("")
                 .to_string();
-            
+
             let profile: Option<String> = arguments
                 .and_then(|a| a.get("profile"))
                 .and_then(|v| serde_json::from_value(v.clone()).ok());
-            
+
             match crate::cli::push(session, profile).await {
                 Ok(_) => json!({
                     "jsonrpc": "2.0",
@@ -214,38 +212,36 @@ async fn handle_tool_call(id: Option<Value>, params: Option<&Value>) -> Value {
                         "code": -32000,
                         "message": e.to_string()
                     }
-                })
-            }
-        }
-        Some("list_sessions") => {
-            match list_sessions_impl().await {
-                Ok(text) => json!({
-                    "jsonrpc": "2.0",
-                    "id": id,
-                    "result": {
-                        "content": [{
-                            "type": "text",
-                            "text": text
-                        }]
-                    }
                 }),
-                Err(e) => json!({
-                    "jsonrpc": "2.0",
-                    "id": id,
-                    "error": {
-                        "code": -32000,
-                        "message": e.to_string()
-                    }
-                })
             }
         }
+        Some("list_sessions") => match list_sessions_impl().await {
+            Ok(text) => json!({
+                "jsonrpc": "2.0",
+                "id": id,
+                "result": {
+                    "content": [{
+                        "type": "text",
+                        "text": text
+                    }]
+                }
+            }),
+            Err(e) => json!({
+                "jsonrpc": "2.0",
+                "id": id,
+                "error": {
+                    "code": -32000,
+                    "message": e.to_string()
+                }
+            }),
+        },
         Some("delete_session") => {
             let session: String = arguments
                 .and_then(|a| a.get("session"))
                 .and_then(|v| v.as_str())
                 .unwrap_or("")
                 .to_string();
-            
+
             match crate::cli::delete_session(session.clone()).await {
                 Ok(_) => json!({
                     "jsonrpc": "2.0",
@@ -264,7 +260,7 @@ async fn handle_tool_call(id: Option<Value>, params: Option<&Value>) -> Value {
                         "code": -32000,
                         "message": e.to_string()
                     }
-                })
+                }),
             }
         }
         _ => {
@@ -283,15 +279,15 @@ async fn handle_tool_call(id: Option<Value>, params: Option<&Value>) -> Value {
 async fn list_sessions_impl() -> Result<String> {
     use crate::config::ConfigManager;
     use crate::session::Session;
-    
+
     let config_manager = ConfigManager::new()?;
     let sessions_dir = config_manager.sessions_dir();
     let sessions = Session::list_all(&sessions_dir)?;
-    
+
     if sessions.is_empty() {
         return Ok("No sessions found".to_string());
     }
-    
+
     let mut output = String::from("Available sessions:\n\n");
     for session in sessions {
         output.push_str(&format!("Session ID: {}\n", session.session_id));
@@ -304,6 +300,6 @@ async fn list_sessions_impl() -> Result<String> {
         output.push_str(&format!("  Epics: {}\n", session.epic_manifest.len()));
         output.push_str("\n");
     }
-    
+
     Ok(output)
 }

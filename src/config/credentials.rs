@@ -14,7 +14,6 @@ pub struct Credentials {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProfileCredentials {
     pub aha_token: String,
-    pub openrouter_api_key: Option<String>,
 }
 
 impl Credentials {
@@ -66,7 +65,6 @@ mod tests {
             "default".to_string(),
             ProfileCredentials {
                 aha_token: "test_token".to_string(),
-                openrouter_api_key: Some("test_key".to_string()),
             },
         );
 

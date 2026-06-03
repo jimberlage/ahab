@@ -1,4 +1,4 @@
-use dialoguer::{Input, Password};
+use dialoguer::Input;
 
 use crate::config::credentials::ProfileCredentials;
 use crate::config::profile::ProfileConfig;
@@ -45,14 +45,7 @@ pub async fn configure(profile_name: Option<String>) -> Result<()> {
         .interact_text()?;
 
     // Save credentials
-    let profile_credentials = ProfileCredentials {
-        aha_token,
-        openrouter_api_key: if openrouter_api_key.is_empty() {
-            None
-        } else {
-            Some(openrouter_api_key)
-        },
-    };
+    let profile_credentials = ProfileCredentials { aha_token };
     credentials.set_profile(profile.clone(), profile_credentials);
     config_manager.save_credentials(&credentials)?;
 

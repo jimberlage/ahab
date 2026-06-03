@@ -124,21 +124,21 @@ impl AhaClient {
                 .as_ref()
                 .and_then(|d| d.body.clone())
                 .or_else(|| aha_page.body.clone())
-            .or_else(|| aha_page.html_body.clone());
+                .or_else(|| aha_page.html_body.clone());
 
-        return Ok(Page::new(
-            aha_page.id.clone(),
-            aha_page.reference_num.clone(),
-            aha_page.name.clone(),
-        )
-        .with_body(body_content.clone().unwrap_or_default())
-        .with_html_body(body_content.unwrap_or_default())
-        .with_url(format!(
-            "https://{}/pages/{}",
-            self.domain, aha_page.reference_num
-        ))
-        .with_product_id(aha_page.product_id.clone())
-        .with_parent_id(aha_page.parent_id.clone()));
+            return Ok(Page::new(
+                aha_page.id.clone(),
+                aha_page.reference_num.clone(),
+                aha_page.name.clone(),
+            )
+            .with_body(body_content.clone().unwrap_or_default())
+            .with_html_body(body_content.unwrap_or_default())
+            .with_url(format!(
+                "https://{}/pages/{}",
+                self.domain, aha_page.reference_num
+            ))
+            .with_product_id(aha_page.product_id.clone())
+            .with_parent_id(aha_page.parent_id.clone()));
         }
 
         // Fall back to unwrapped response
@@ -166,11 +166,18 @@ impl AhaClient {
     }
 
     /// Get children of a specific page from a pre-fetched list
-    pub fn get_children_from_list(&self, all_pages: &[AhaPage], parent_page_id: &str) -> Vec<String> {
+    pub fn get_children_from_list(
+        &self,
+        all_pages: &[AhaPage],
+        parent_page_id: &str,
+    ) -> Vec<String> {
         all_pages
             .iter()
             .filter(|p| {
-                p.parent_id.as_ref().map(|pid| pid == parent_page_id).unwrap_or(false)
+                p.parent_id
+                    .as_ref()
+                    .map(|pid| pid == parent_page_id)
+                    .unwrap_or(false)
             })
             .map(|p| p.reference_num.clone())
             .collect()
@@ -180,7 +187,7 @@ impl AhaClient {
     pub async fn fetch_all_pages(&self, product_id: &str) -> Result<Vec<AhaPage>> {
         let mut all_pages = Vec::new();
         let mut current_page = 1;
-        
+
         loop {
             let url = format!(
                 "{}/products/{}/pages?page={}",
@@ -207,7 +214,7 @@ impl AhaClient {
             }
 
             let response_text = response.text().await?;
-            
+
             // Parse the response
             #[derive(Debug, Deserialize)]
             struct Pagination {
@@ -229,7 +236,7 @@ impl AhaClient {
             if current_page >= pages_response.pagination.total_pages {
                 break;
             }
-            
+
             current_page += 1;
         }
 

@@ -80,18 +80,15 @@ pub async fn push(session_id: String, profile_name: Option<String>) -> Result<()
                 created_urls.push((epic.title.clone(), url.clone()));
 
                 // Update manifest
-                session
-                    .metadata
-                    .epic_manifest
-                    .insert(
-                        filename.clone(),
-                        EpicManifestEntry {
-                            filename: filename.clone(),
-                            epic_id: None, // We don't have the epic ID from the URL
-                            epic_url: Some(url),
-                            created_at: Some(Utc::now()),
-                        },
-                    );
+                session.metadata.epic_manifest.insert(
+                    filename.clone(),
+                    EpicManifestEntry {
+                        filename: filename.clone(),
+                        epic_id: None, // We don't have the epic ID from the URL
+                        epic_url: Some(url),
+                        created_at: Some(Utc::now()),
+                    },
+                );
             }
             Err(e) => {
                 println!("✗");
