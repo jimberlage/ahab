@@ -1,23 +1,23 @@
 class Ahab < Formula
   desc "ahab CLI tool"
   homepage "https://github.com/jimberlage/ahab"
-  version "3.0.0"
+  version "4.0.0"
   license "MIT"
 
   on_macos do
     on_arm do
-      url "https://github.com/jimberlage/ahab/releases/download/v3.0.0/ahab-aarch64-apple-darwin.tar.gz"
+      url "https://github.com/jimberlage/ahab/releases/download/v4.0.0/ahab-aarch64-apple-darwin.tar.gz"
       sha256 "<CHANGE ME>"
     end
   end
 
   on_linux do
     on_arm do
-      url "https://github.com/jimberlage/ahab/releases/download/v3.0.0/ahab-aarch64-linux.tar.gz"
+      url "https://github.com/jimberlage/ahab/releases/download/v4.0.0/ahab-aarch64-linux.tar.gz"
       sha256 "<CHANGE ME>"
     end
     on_intel do
-      url "https://github.com/jimberlage/ahab/releases/download/v3.0.0/ahab-x86_64-linux.tar.gz"
+      url "https://github.com/jimberlage/ahab/releases/download/v4.0.0/ahab-x86_64-linux.tar.gz"
       sha256 "<CHANGE ME>"
     end
   end
